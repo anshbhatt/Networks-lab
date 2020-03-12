@@ -133,7 +133,7 @@ int main()
 	decode_msg(res, &t, &l, msg);
 	printf("%d  %d  %s\n", t, l, msg);
 
-	/*
+	
 	while(listen(tcp_fd , MAX_PENDING) != -1) {
 		struct sockaddr_in cli_addr;
 		int len = sizeof(cli_addr);
@@ -151,7 +151,7 @@ int main()
 
 			char repl[MAX_LENGTH];
 			//TODO: create a function whick encode msg in string
-			/*strcat(repl, "Type:1*");
+			strcat(repl, "Type:1*");
 			strcat(repl, "Msg Length:4*");
 			strcat(repl, "Msg:3003");
 			printf("%d\n", strlen(repl));
@@ -177,10 +177,10 @@ int main()
 			printf("Hello message sent.\n");
 
 			exit(EXIT_SUCCESS);
-		}*/
+		}
 
 
-
+}
 
 	return 0;
 }

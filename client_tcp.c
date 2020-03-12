@@ -41,11 +41,11 @@ int main() {
 
     char buff[1024];
 
-    char echo_word[25];
+    char echo_word[100];
     int rcvMsgSize;
-        fgets(echo_word, 25, stdin);
+        fgets(echo_word, 100, stdin);
         printf("%s  Sent\n", echo_word);
-        if(send(sock_id, echo_word, 25, 0) != 25){ printf("Error sending msg\n"); return 0;}
+        if(send(sock_id, echo_word, 100, 0) != 100){ printf("Error sending msg\n"); return 0;}
         if((rcvMsgSize = recv(sock_id, buff, 1024, 0)) < 0) {
             printf("Error receiving msg\n"); return 0;
         };
