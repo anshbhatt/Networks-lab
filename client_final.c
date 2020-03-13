@@ -107,7 +107,7 @@ void decode_message(char *str, int *type, int *length, char *msg)
 }
 
 //Creating the UDP socket
-int create_udp_socket(int port, char *ip)
+int create_udp_socket(int port)
 {
 		int client_socket;
 		client_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -115,7 +115,7 @@ int create_udp_socket(int port, char *ip)
 		struct sockaddr_in client_address;
 		client_address.sin_family = AF_INET;
 		client_address.sin_port = htons(port);
-		client_address.sin_addr.s_addr = inet_addr(ip);
+		client_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
 		int status = bind(client_socket, (struct sockaddr *) &client_address, sizeof(client_address));
 		if(status == -1) err_handler("UDP Binding failed");
@@ -129,8 +129,6 @@ int main(int argc, char* argv[])
 		int server_port = atoi(argv[2]);
 		char socket_ip[25] = "";
 		strcpy(socket_ip, argv[1]);
-
-		printf("%s, %s\n", socket_ip, INADDR_ANY);
 
 		// Creating a server port
 		int socket_id = socket(PF_INET, SOCK_STREAM, 0);
@@ -149,7 +147,6 @@ int main(int argc, char* argv[])
 		char udp_bool;
 		printf("UDP request to be made? (y/n): ");
 		scanf("%c", &udp_bool);
-		printf("%c\n",udp_bool);
 		if (udp_bool == 'y')
 		{
 				// Sends the request for UDP connection.
@@ -168,7 +165,7 @@ int main(int argc, char* argv[])
 				int type,length;
 				strcpy(message,"");
 				decode_message(buffer, &type, &length, message);
-				printf("TYPE: %d, Length: %d\nMsg: %s\n",type, length, message);
+				printf("Encoded Message received: %s\n",buffer);
 
 				//Changing the server port
 				int port = atoi(message);
@@ -182,7 +179,7 @@ int main(int argc, char* argv[])
 				int client_port;
 				printf("Client port number for UDP connection: ");
 				scanf("%d", &client_port);
-				int udp_fd = create_udp_socket(client_port, socket_ip);
+				int udp_fd = create_udp_socket(client_port);
 
 				// Sending a data request using UDP port to the server
 				fflush(stdin);
@@ -192,7 +189,7 @@ int main(int argc, char* argv[])
 
 				char reply_message[MAX_LENGTH] = "";
 				encode_message(3, message, reply_message);
-				printf("%s\n", reply_message);
+				//printf("%s\n", reply_message);
 				sendto(udp_fd, reply_message, strlen(reply_message), 0, (struct sockaddr *) &address_port, sizeof(address_port));
 				printf("Message sent: %s\n", reply_message);
 
@@ -201,7 +198,7 @@ int main(int argc, char* argv[])
 
 				message_size = recvfrom(udp_fd, (char *)buff, MAX_LENGTH, 0, (struct sockaddr *) &address_port, sizeof(address_port));
 				decode_message(buff, &type, &length, message);
-				printf("TYPE: %d, Length: %d\nMsg: %s\n",type, length, message);
+				printf("Encoded Message received: %s\n",buffer);
 
 				// Closing the UDP connection
 				close(udp_fd);

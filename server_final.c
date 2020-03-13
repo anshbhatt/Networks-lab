@@ -180,7 +180,7 @@ int main( int argc, char *argv[])
 						int type,length;
 						char message[1024]="";
 						decode_message(buffer, &type, &length, message);
-						printf("TYPE: %d, Length: %d\nMsg: %s\n",type, length, message);
+						printf("Encoded Message: %s\n",buffer);
 
 						if (type == 1 && !strcmp(message, "UDP PORT TO BE GIVEN"))
 						{
@@ -202,7 +202,7 @@ int main( int argc, char *argv[])
 								//Receive the data message on UDP port from the client
 								message_size = recvfrom(udp_fd, buff, MAX_LENGTH, 0, (struct sockaddr *) &client_address, &len);
 								decode_message(buff, &type, &length, message);
-								printf("TYPE: %d, Length: %d\nMsg: %s\n",type, length, message);
+								printf("Encoded Message: %s\n",buff);
 
 								char msg_for_cli[MAX_LENGTH] = "";
 								printf("Msg for client: ");
