@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
 
 				message_size = recvfrom(udp_fd, (char *)buff, MAX_LENGTH, 0, (struct sockaddr *) &address_port, sizeof(address_port));
 				decode_message(buff, &type, &length, message);
-				printf("Encoded Message received: %s\n",buffer);
+				printf("Encoded Message received: %s\n",buff);
 
 				// Closing the UDP connection
 				close(udp_fd);
