@@ -99,16 +99,16 @@ int main(int argc, char *argv[])
     InternetStackHelper internet;
     internet.Install(c);
 
-    //uint max_queue_size_1 = (20*80000)/packet_size;
-    //uint max_queue_size_2 = (100*30000)/packet_size;
+    uint max_queue_size_1 = (20*80000)/packet_size;
+    uint max_queue_size_2 = (100*30000)/packet_size;
 
     // We create the channels first without any IP addressing information
     NS_LOG_INFO("Create channels.");
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("DataRate", StringValue("80Mbps"));
     p2p.SetChannelAttribute("Delay", StringValue("20ms"));
-    //p2p.SetQueue ("ns3::DropTailQueue", "MaxPackets", UintegerValue(max_queue_size_1));
-     p2p.SetQueue ("ns3::DropTailQueue");
+    p2p.SetQueue ("ns3::DropTailQueue","MaxSize", StringValue (std::to_string(max_queue_size_1) + "p"));
+     // p2p.SetQueue ("ns3::DropTailQueue");
 
     NetDeviceContainer d_h1r1 = p2p.Install(h1r1);
     NetDeviceContainer d_h2r1 = p2p.Install(h2r1);
@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
 
     p2p.SetDeviceAttribute("DataRate", StringValue("30Mbps"));
     p2p.SetChannelAttribute("Delay", StringValue("100ms"));
-    //p2p.SetQueue ("ns3::DropTailQueue", "MaxPackets", UintegerValue(max_queue_size_2));
-     p2p.SetQueue ("ns3::DropTailQueue");
+    p2p.SetQueue ("ns3::DropTailQueue","MaxSize", StringValue (std::to_string(max_queue_size_2) + "p"));
+     // p2p.SetQueue ("ns3::DropTailQueue");
     NetDeviceContainer d_r1r2 = p2p.Install(r1r2);
 
     // Later, we add IP addresses.
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     Ptr<FlowMonitor> flowmon;
     FlowMonitorHelper flowmonHelper;
     flowmon = flowmonHelper.InstallAll();
-    Simulator::Stop(Seconds(11));
+    Simulator::Stop(Seconds(11+(11*i)));
     Simulator::Run();
     flowmon->CheckForLostPackets();
 
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
       std::cout<<t.sourceAddress<<"\n";
       std::cout<<t.destinationAddress<<"\n";
 
-      if(t.sourceAddress == "10.1.5.1") {
+      if(t.sourceAddress == "10.1.1.1") {
         throughput_udp = i->second.rxBytes * 8.0 / (i->second.timeLastRxPacket.GetSeconds () - i->second.timeFirstRxPacket.GetSeconds ()) / 1000000;
         delay_udp = i->second.delaySum.GetSeconds()/(i->second.rxPackets) ;
 
@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
         std::cout<<std::endl;
 
       } 
-      else if(t.sourceAddress == "10.1.4.1") {
+      else if(t.sourceAddress == "10.1.2.1") {
         throughput_tcp = i->second.rxBytes * 8.0 / (i->second.timeLastRxPacket.GetSeconds () - i->second.timeFirstRxPacket.GetSeconds ()) / 1000000;
         delay_tcp = i->second.delaySum.GetSeconds()/(i->second.rxPackets);
         
