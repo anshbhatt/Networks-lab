@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
   cmd.AddValue("prot", "Protocol needs to be used TcpVegas/TcpHighSpeed?", prot);
   cmd.AddValue("max_packets", "Maximum no of packates host can sends", max_packets);
   cmd.AddValue("sim_count", "No of times simulation needs to run?", sim_count);
+  cmd.AddValue("simultaneously", "to run together or not", simultaneously);
 
   cmd.Parse(argc, argv);
 
@@ -164,16 +165,31 @@ int main(int argc, char *argv[])
     
     onoff.SetAttribute ("PacketSize", UintegerValue (packet_size));
     ApplicationContainer udp_apps = onoff.Install(c.Get(1)); // H2
-    udp_apps.Start(Seconds(0 + i*10));
-    udp_apps.Stop(Seconds(5.0 + i*10));
+    if(simultaneously==false)
+    {
+      udp_apps.Start (Seconds ( (0.0+(10*i))  ) );
+      udp_apps.Stop (Seconds ((5.0+(10* i))) );      
+    }
+    else
+    {
+      udp_apps.Start (Seconds ( (0.0+(10*i))  ) );
+      udp_apps.Stop (Seconds ((10.0+(10*i))) );
+    }
 
     // Create a packet sink to receive these packets
     PacketSinkHelper udp_sink("ns3::UdpSocketFactory",
                           Address(InetSocketAddress(Ipv4Address::GetAny(), port))); // can receive from any
     udp_apps = udp_sink.Install(c.Get(5));                                                  // H4
-    udp_apps.Start(Seconds(0 + i*10));
-    udp_apps.Stop(Seconds(5.0 + i*10));
-
+   if(simultaneously==false)
+    {
+      udp_apps.Start (Seconds ((0.0+(10*i))) );
+      udp_apps.Stop (Seconds ((5.0+(10*i))) );     
+    }
+    else
+    {
+      udp_apps.Start (Seconds ((0.0+(10*i))) );
+      udp_apps.Stop (Seconds ((10.0+(10*i))) );      
+    }
 
     /*
      * FTP Traffic using TCP
@@ -186,15 +202,31 @@ int main(int argc, char *argv[])
     server.SetAttribute ("SendSize", UintegerValue (packet_size));
     ApplicationContainer tcp_apps = server.Install (c.Get(0)); // H1
 
-    tcp_apps.Start(Seconds(5.0 + i*10));
-    tcp_apps.Stop(Seconds(10.0 + i*10));
+    if(simultaneously==false)
+    {
+      tcp_apps.Start (Seconds ((5.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
+    }
+    else
+    {
+      tcp_apps.Start (Seconds ((0.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))) );  
+    }
 
     // packet sink to receive ftp packets
     PacketSinkHelper tcp_sink("ns3::TcpSocketFactory",
                           Address(InetSocketAddress(Ipv4Address::GetAny(), port)));
     tcp_apps = tcp_sink.Install(c.Get(4)); // H3
-    tcp_apps.Start(Seconds(5.0 + i*10));
-    tcp_apps.Stop(Seconds(10.0 + i*10));
+    if(simultaneously==false)
+    {
+      tcp_apps.Start (Seconds ((5.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
+    }
+    else
+    {
+      tcp_apps.Start (Seconds ((0.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))) );  
+    }
 
 
     NS_LOG_INFO("Run Simulation.");
