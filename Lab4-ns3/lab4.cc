@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 
   // Some info about tcp connection:
   uint32_t max_bytes = 0;
-  uint32_t packet_size = 1024; // base packet size, after every loop we will increase this:
-  uint32_t max_packets = 0;    // max packets hosts can sends;
+  uint32_t packet_size = 200; // base packet size, after every loop we will increase this:
+  //uint32_t max_packets = 0;    // max packets hosts can sends;
   uint32_t sim_count = 0;      // no of times simulation needs to be ran (for various packet size)
   //uint32_t time_interval = 0;  // time interval for sim.
   std::string prot = "Highspeed";
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
   cmd.AddValue("max_bytes", "Maximum no of bytes host can sends", max_bytes);
   cmd.AddValue("prot", "Protocol needs to be used TcpVegas/TcpHighSpeed?", prot);
-  cmd.AddValue("max_packets", "Maximum no of packates host can sends", max_packets);
+  cmd.AddValue("packetsize", "Starting packet size", packet_size);
   cmd.AddValue("sim_count", "No of times simulation needs to run?", sim_count);
   cmd.AddValue("simultaneously", "to run together or not", simultaneously);
 
@@ -109,7 +109,6 @@ int main(int argc, char *argv[])
     p2p.SetDeviceAttribute("DataRate", StringValue("80Mbps"));
     p2p.SetChannelAttribute("Delay", StringValue("20ms"));
     p2p.SetQueue ("ns3::DropTailQueue","MaxSize", StringValue (std::to_string(max_queue_size_1) + "p"));
-     // p2p.SetQueue ("ns3::DropTailQueue");
 
     NetDeviceContainer d_h1r1 = p2p.Install(h1r1);
     NetDeviceContainer d_h2r1 = p2p.Install(h2r1);
@@ -162,13 +161,13 @@ int main(int argc, char *argv[])
     uint16_t port = 9; // Discard port (RFC 863)
     OnOffHelper onoff("ns3::UdpSocketFactory",
                       Address(InetSocketAddress(ip_h4r2.GetAddress(0), port))); // here addresse of h4:
-    
+
     onoff.SetAttribute ("PacketSize", UintegerValue (packet_size));
     ApplicationContainer udp_apps = onoff.Install(c.Get(1)); // H2
     if(simultaneously==false)
     {
       udp_apps.Start (Seconds ( (0.0+(10*i))  ) );
-      udp_apps.Stop (Seconds ((5.0+(10* i))) );      
+      udp_apps.Stop (Seconds ((5.0+(10* i))) );
     }
     else
     {
@@ -183,12 +182,12 @@ int main(int argc, char *argv[])
    if(simultaneously==false)
     {
       udp_apps.Start (Seconds ((0.0+(10*i))) );
-      udp_apps.Stop (Seconds ((5.0+(10*i))) );     
+      udp_apps.Stop (Seconds ((10.0+(10*i))) );
     }
     else
     {
       udp_apps.Start (Seconds ((0.0+(10*i))) );
-      udp_apps.Stop (Seconds ((10.0+(10*i))) );      
+      udp_apps.Stop (Seconds ((10.0+(10*i))) );
     }
 
     /*
@@ -196,7 +195,7 @@ int main(int argc, char *argv[])
      *
     **/
     port = 12344;
-    
+
     BulkSendHelper server ("ns3::TcpSocketFactory", Address(InetSocketAddress(ip_h3r2.GetAddress(0), port)));
     server.SetAttribute ("MaxBytes", UintegerValue (max_bytes));
     server.SetAttribute ("SendSize", UintegerValue (packet_size));
@@ -204,13 +203,13 @@ int main(int argc, char *argv[])
 
     if(simultaneously==false)
     {
-      tcp_apps.Start (Seconds ((5.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
+        tcp_apps.Start (Seconds ((10.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((20.0+(10*i))) );
     }
     else
     {
-      tcp_apps.Start (Seconds ((0.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((10.0+(10*i))) );  
+        tcp_apps.Start (Seconds ((0.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
     }
 
     // packet sink to receive ftp packets
@@ -219,13 +218,13 @@ int main(int argc, char *argv[])
     tcp_apps = tcp_sink.Install(c.Get(4)); // H3
     if(simultaneously==false)
     {
-      tcp_apps.Start (Seconds ((5.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
+        tcp_apps.Start (Seconds ((10.0+(10*i))) );
+        tcp_apps.Stop (Seconds ((20.0+(10*i))) );
     }
     else
     {
       tcp_apps.Start (Seconds ((0.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((10.0+(10*i))) );  
+        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
     }
 
 
@@ -233,7 +232,7 @@ int main(int argc, char *argv[])
 
     // Upto here: (Topology created. bhai siddhant ab tu data extract karke plot kar dena please bhai)
     /*
-      **************************    
+      **************************
         LOGGING of PARAMETERS
       **************************
     */
@@ -241,26 +240,25 @@ int main(int argc, char *argv[])
     Ptr<FlowMonitor> flowmon;
     FlowMonitorHelper flowmonHelper;
     flowmon = flowmonHelper.InstallAll();
-    Simulator::Stop(Seconds(11+(11*i)));
+    Simulator::Stop(Seconds(10+(10*i)*15));
     Simulator::Run();
     flowmon->CheckForLostPackets();
 
     Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier>(flowmonHelper.GetClassifier());
     std::map<FlowId, FlowMonitor::FlowStats> stats = flowmon->GetFlowStats();
-    
+
     double throughput_udp;
     double throughput_tcp;
     double delay_udp;
     double delay_tcp;
-    
-    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin(); i != stats.end(); ++i) 
+
+    for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin(); i != stats.end(); ++i)
     {
       Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-      std::cout<<"asdfasdf\n";
       std::cout<<t.sourceAddress<<"\n";
       std::cout<<t.destinationAddress<<"\n";
 
-      if(t.sourceAddress == "10.1.1.1") {
+      if(t.sourceAddress == "10.1.2.1") {
         throughput_udp = i->second.rxBytes * 8.0 / (i->second.timeLastRxPacket.GetSeconds () - i->second.timeFirstRxPacket.GetSeconds ()) / 1000000;
         delay_udp = i->second.delaySum.GetSeconds()/(i->second.rxPackets) ;
 
@@ -287,11 +285,11 @@ int main(int argc, char *argv[])
         std::cout << "Mean jitter:" << i->second.jitterSum.GetSeconds () / (i->second.rxPackets - 1) << std::endl;
         std::cout<<std::endl;
 
-      } 
-      else if(t.sourceAddress == "10.1.2.1") {
+      }
+      else if(t.sourceAddress == "10.1.1.1") {
         throughput_tcp = i->second.rxBytes * 8.0 / (i->second.timeLastRxPacket.GetSeconds () - i->second.timeFirstRxPacket.GetSeconds ()) / 1000000;
         delay_tcp = i->second.delaySum.GetSeconds()/(i->second.rxPackets);
-        
+
         dataset_tcp.Add (packet_size,throughput_tcp);
         dataset_tcp_delay.Add(packet_size,delay_tcp);
 
@@ -324,7 +322,7 @@ int main(int argc, char *argv[])
   std::string graphicsFileName        = fileNameWithNoExtension + ".png";
   std::string plotFileName            = fileNameWithNoExtension + ".plt";
   std::string plotTitle               = prot + "vs UDP throughput";
-  
+
   std::string fileNameWithNoExtension_delay = prot+"_delay"+simultaneously_str;
   std::string graphicsFileName_delay        = fileNameWithNoExtension_delay + ".png";
   std::string plotFileName_delay            = fileNameWithNoExtension_delay + ".plt";
@@ -333,7 +331,7 @@ int main(int argc, char *argv[])
   // Instantiate the plot and set its title.
   Gnuplot plot (graphicsFileName);
   Gnuplot plot_delay (graphicsFileName_delay);
-  
+
   plot.SetTitle (plotTitle);
   plot_delay.SetTitle (plotTitle_delay);
 
@@ -355,7 +353,7 @@ int main(int argc, char *argv[])
   dataset_tcp.SetStyle (Gnuplot2dDataset::LINES_POINTS);
   dataset_udp.SetTitle ("Throughput CBR over UDP");
   dataset_udp.SetStyle (Gnuplot2dDataset::LINES_POINTS);
-  
+
   dataset_tcp_delay.SetTitle ("Delay FTP over TCP");
   dataset_tcp_delay.SetStyle (Gnuplot2dDataset::LINES_POINTS);
   dataset_udp_delay.SetTitle ("Delay CBR over UDP");
@@ -368,7 +366,7 @@ int main(int argc, char *argv[])
   // Add the dataset to the plot.
   plot.AddDataset (dataset_tcp);
   plot.AddDataset (dataset_udp);
-  
+
   plot_delay.AddDataset (dataset_udp_delay);
   plot_delay.AddDataset (dataset_tcp_delay);
 
