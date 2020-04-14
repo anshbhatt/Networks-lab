@@ -44,10 +44,10 @@ int main(int argc, char *argv[])
 
   // Some info about tcp connection:
   uint32_t max_bytes = 0;
-  uint32_t packet_size = 200; // base packet size, after every loop we will increase this:
+  uint32_t packet_size = 100; // base packet size, after every loop we will increase this:
   //uint32_t max_packets = 0;    // max packets hosts can sends;
   uint32_t sim_count = 0;      // no of times simulation needs to be ran (for various packet size)
-  //uint32_t time_interval = 0;  // time interval for sim.
+  uint32_t run_time = 0;  // time interval for sim.
   std::string prot = "Highspeed";
   bool simultaneously = false;
 
@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
   cmd.AddValue("max_bytes", "Maximum no of bytes host can sends", max_bytes);
   cmd.AddValue("prot", "Protocol needs to be used TcpVegas/TcpHighSpeed?", prot);
   cmd.AddValue("packetsize", "Starting packet size", packet_size);
+  cmd.AddValue("run_time", "Run time", run_time);
   cmd.AddValue("sim_count", "No of times simulation needs to run?", sim_count);
   cmd.AddValue("simultaneously", "to run together or not", simultaneously);
 
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
 
   for (uint i = 0; i < sim_count; i++)
   {
-    packet_size = packet_size + 100*i;
+    packet_size = packet_size + 100;
 
     NS_LOG_INFO("Create nodes.");
     NodeContainer c;
@@ -108,7 +109,8 @@ int main(int argc, char *argv[])
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("DataRate", StringValue("80Mbps"));
     p2p.SetChannelAttribute("Delay", StringValue("20ms"));
-    p2p.SetQueue ("ns3::DropTailQueue","MaxSize", StringValue (std::to_string(max_queue_size_1) + "p"));
+    p2p.SetQueue ("ns3::DropTailQueue",
+              "MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, max_queue_size_1)));
 
     NetDeviceContainer d_h1r1 = p2p.Install(h1r1);
     NetDeviceContainer d_h2r1 = p2p.Install(h2r1);
@@ -117,8 +119,8 @@ int main(int argc, char *argv[])
 
     p2p.SetDeviceAttribute("DataRate", StringValue("30Mbps"));
     p2p.SetChannelAttribute("Delay", StringValue("100ms"));
-    p2p.SetQueue ("ns3::DropTailQueue","MaxSize", StringValue (std::to_string(max_queue_size_2) + "p"));
-     // p2p.SetQueue ("ns3::DropTailQueue");
+    p2p.SetQueue ("ns3::DropTailQueue",
+              "MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, max_queue_size_2)));
     NetDeviceContainer d_r1r2 = p2p.Install(r1r2);
 
     // Later, we add IP addresses.
@@ -166,13 +168,13 @@ int main(int argc, char *argv[])
     ApplicationContainer udp_apps = onoff.Install(c.Get(1)); // H2
     if(simultaneously==false)
     {
-      udp_apps.Start (Seconds ( (0.0+(10*i))  ) );
-      udp_apps.Stop (Seconds ((5.0+(10* i))) );
+      udp_apps.Start (Seconds ( (0.0+(10*i))*run_time  ) );
+      udp_apps.Stop (Seconds ((5.0+(10* i))*run_time) );
     }
     else
     {
-      udp_apps.Start (Seconds ( (0.0+(10*i))  ) );
-      udp_apps.Stop (Seconds ((10.0+(10*i))) );
+      udp_apps.Start (Seconds ( (0.0+(10*i))*run_time  ) );
+      udp_apps.Stop (Seconds ((10.0+(10*i))*run_time) );
     }
 
     // Create a packet sink to receive these packets
@@ -181,13 +183,13 @@ int main(int argc, char *argv[])
     udp_apps = udp_sink.Install(c.Get(5));                                                  // H4
    if(simultaneously==false)
     {
-      udp_apps.Start (Seconds ((0.0+(10*i))) );
-      udp_apps.Stop (Seconds ((10.0+(10*i))) );
+      udp_apps.Start (Seconds ((0.0+(10*i))*run_time) );
+      udp_apps.Stop (Seconds ((5.0+(10*i))*run_time) );
     }
     else
     {
-      udp_apps.Start (Seconds ((0.0+(10*i))) );
-      udp_apps.Stop (Seconds ((10.0+(10*i))) );
+      udp_apps.Start (Seconds ((0.0+(10*i))*run_time) );
+      udp_apps.Stop (Seconds ((10.0+(10*i))*run_time) );
     }
 
     /*
@@ -196,35 +198,35 @@ int main(int argc, char *argv[])
     **/
     port = 12344;
 
-    BulkSendHelper server ("ns3::TcpSocketFactory", Address(InetSocketAddress(ip_h3r2.GetAddress(0), port)));
+    BulkSendHelper server ("ns3::TcpSocketFactory", InetSocketAddress(ip_h3r2.GetAddress(0), port));
     server.SetAttribute ("MaxBytes", UintegerValue (max_bytes));
     server.SetAttribute ("SendSize", UintegerValue (packet_size));
-    ApplicationContainer tcp_apps = server.Install (c.Get(0)); // H1
+    ApplicationContainer tcp_apps = server.Install (h1r1.Get(0)); // H1
 
     if(simultaneously==false)
     {
-        tcp_apps.Start (Seconds ((10.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((20.0+(10*i))) );
+        tcp_apps.Start (Seconds ((5.0+(10*i))*run_time) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))*run_time) );
     }
     else
     {
-        tcp_apps.Start (Seconds ((0.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
+        tcp_apps.Start (Seconds ((0.0+(10*i))*run_time) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))*run_time) );
     }
 
     // packet sink to receive ftp packets
     PacketSinkHelper tcp_sink("ns3::TcpSocketFactory",
                           Address(InetSocketAddress(Ipv4Address::GetAny(), port)));
-    tcp_apps = tcp_sink.Install(c.Get(4)); // H3
+    tcp_apps = tcp_sink.Install(h3r2.Get(0)); // H3
     if(simultaneously==false)
     {
-        tcp_apps.Start (Seconds ((10.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((20.0+(10*i))) );
+        tcp_apps.Start (Seconds ((5.0+(10*i))*run_time) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))*run_time) );
     }
     else
     {
-      tcp_apps.Start (Seconds ((0.0+(10*i))) );
-        tcp_apps.Stop (Seconds ((10.0+(10*i))) );
+      tcp_apps.Start (Seconds ((0.0+(10*i))*run_time) );
+        tcp_apps.Stop (Seconds ((10.0+(10*i))*run_time) );
     }
 
 
@@ -240,9 +242,9 @@ int main(int argc, char *argv[])
     Ptr<FlowMonitor> flowmon;
     FlowMonitorHelper flowmonHelper;
     flowmon = flowmonHelper.InstallAll();
-    Simulator::Stop(Seconds(10+(10*i)*15));
+    Simulator::Stop(Seconds((10+(10*i))*run_time) );
     Simulator::Run();
-    flowmon->CheckForLostPackets();
+    //flowmon->CheckForLostPackets();
 
     Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier>(flowmonHelper.GetClassifier());
     std::map<FlowId, FlowMonitor::FlowStats> stats = flowmon->GetFlowStats();
