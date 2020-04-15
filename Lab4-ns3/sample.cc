@@ -55,13 +55,14 @@ int main (int argc, char *argv[])
 
 	bool simultaneously = false;
     std::string prot = "TcpHighSpeed";
+
 	CommandLine cmd;
     cmd.AddValue ("maxBytes", "Total number of bytes for application to send", maxBytes);
     cmd.AddValue ("packetsize", "Total number of bytes for application to send", packetsize);
     cmd.AddValue ("prot", "Transport protocol to use:TcpHighSpeed, TcpVegas, TcpScalable", prot);
     cmd.AddValue ("for_loop", "no of for loop runs", for_loop);
     cmd.AddValue ("run_time", "run_time in factor of 5", run_time);
-    cmd.AddValue ("simultaneously", "run_time in factor of 5", simultaneously);
+    cmd.AddValue ("simultaneously", "To run simultaneously or not?", simultaneously);
 
     cmd.Parse (argc, argv);
 
@@ -123,8 +124,7 @@ int main (int argc, char *argv[])
 		//router to host links
 		p2p.SetDeviceAttribute ("DataRate", StringValue ("80Mbps"));
 		p2p.SetChannelAttribute ("Delay", StringValue ("20ms"));
-	  p2p.SetQueue ("ns3::DropTailQueue",
-              "MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueSizeHR)));
+	  	p2p.SetQueue ("ns3::DropTailQueue","MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueSizeHR)));
 
 		NetDeviceContainer d0d2 = p2p.Install (n0n2);
 		NetDeviceContainer d1d2 = p2p.Install (n1n2);
@@ -134,8 +134,7 @@ int main (int argc, char *argv[])
 		//router to router link
 		p2p.SetDeviceAttribute ("DataRate", StringValue ("30Mbps"));
 		p2p.SetChannelAttribute ("Delay", StringValue ("100ms"));
-		p2p.SetQueue ("ns3::DropTailQueue",
-              "MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueSizeRR)));
+		p2p.SetQueue ("ns3::DropTailQueue","MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueSizeRR)));
 		NetDeviceContainer d2d3 = p2p.Install (n2n3);
 
 		// //error model
