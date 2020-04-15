@@ -301,7 +301,7 @@ int main (int argc, char *argv[])
 		{
 			NS_LOG_INFO("Iteration");
 			Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-			std::cout<<"asdfasdf\n";
+	
 			std::cout<<t.sourceAddress<<"\n";
 			std::cout<<t.destinationAddress<<"\n";
 
