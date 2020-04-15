@@ -1,10 +1,3 @@
-/*
-Authors:
-
-150101037: Mukkoti Anil Kumar
-150101045: Patoliya Meetkumar
-150101072: Shubham Singhal
-
 
 // Network topology
 //
@@ -15,8 +8,6 @@ Authors:
 //      /							   \
 //     / 80 Mb/s, 20ms                   \
 //   n1 								 n5
-
-*/
 
 #include <string>
 #include <fstream>
@@ -88,7 +79,6 @@ int main (int argc, char *argv[])
 	// Config::SetDefault ("ns3::OnOffApplication::DataRate", StringValue ("44kb/s"));
 
 	//Dataset for gnuplot
-
     Gnuplot2dDataset dataset_udp;
 	Gnuplot2dDataset dataset_tcp;
     Gnuplot2dDataset dataset_udp_delay;
@@ -99,7 +89,7 @@ int main (int argc, char *argv[])
 		uint32_t udpPacketSize= packetsize+100*i;
 		uint32_t tcpPacketSize= udpPacketSize;
 
-		//create a container for 6 nodes
+		//Creating a container for 6 nodes
 		NodeContainer c;
 		c.Create (6);
 		NodeContainer n0n2 = NodeContainer (c.Get (0), c.Get (2));
@@ -109,7 +99,7 @@ int main (int argc, char *argv[])
 		NodeContainer n3n5 = NodeContainer (c.Get (3), c.Get (5));
 
 
-		// installing internet stack in all nodes
+		//Installing internet stack in all nodes
 		InternetStackHelper internet;
 		internet.Install (c);
 
@@ -118,10 +108,10 @@ int main (int argc, char *argv[])
 		uint32_t queueSizeRR = (30000*100)/udpPacketSize;
 
 
-		//point to point helper is used to create p2p links between nodes
+		//Point to point helper is used to create p2p links between nodes
 		PointToPointHelper p2p;
 
-		//router to host links
+		//UCreating router to host links
 		p2p.SetDeviceAttribute ("DataRate", StringValue ("80Mbps"));
 		p2p.SetChannelAttribute ("Delay", StringValue ("20ms"));
 	  	p2p.SetQueue ("ns3::DropTailQueue","MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueSizeHR)));
@@ -131,19 +121,19 @@ int main (int argc, char *argv[])
 		NetDeviceContainer d3d4 = p2p.Install (n3n4);
 		NetDeviceContainer d3d5 = p2p.Install (n3n5);
 
-		//router to router link
+		//Creating router to router link
 		p2p.SetDeviceAttribute ("DataRate", StringValue ("30Mbps"));
 		p2p.SetChannelAttribute ("Delay", StringValue ("100ms"));
 		p2p.SetQueue ("ns3::DropTailQueue","MaxSize", QueueSizeValue (QueueSize (QueueSizeUnit::PACKETS, queueSizeRR)));
 		NetDeviceContainer d2d3 = p2p.Install (n2n3);
 
-		// //error model
+		//Making error model
 		Ptr<RateErrorModel> em = CreateObject<RateErrorModel> ();
 	    em->SetAttribute ("ErrorRate", DoubleValue (ERROR));
 	    d3d4.Get (1)->SetAttribute ("ReceiveErrorModel", PointerValue (em));
 	    d3d5.Get (1)->SetAttribute ("ReceiveErrorModel", PointerValue (em));
 
-		//assigning IP to the netdevice containers having 2 nodes each
+		//Assigning IP to the netdevice containers having 2 nodes each
 		Ipv4AddressHelper ipv4;
 		ipv4.SetBase ("10.1.0.0", "255.255.255.0");
 		Ipv4InterfaceContainer i0i2 = ipv4.Assign (d0d2);
@@ -161,10 +151,10 @@ int main (int argc, char *argv[])
 		Ipv4InterfaceContainer i3i5 = ipv4.Assign (d3d5);
 
 
-		//routuing tables
+		//Routing tables
 		Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-		//printing ips
+		//Printing the IPs
 		std::cout << "Assigned IPs to Receivers:" << std::endl;
 		std::cout<<i3i4.GetAddress(0)<<std::endl;
 		std::cout<<i3i4.GetAddress(1)<<std::endl;
@@ -180,7 +170,7 @@ int main (int argc, char *argv[])
 		std::cout<< i2i3.GetAddress(1)<<std::endl;
 
 
-		//printing routing tables for the all the nodes in the container
+		//Printing routing tables for the all the nodes in the container
 		Ipv4GlobalRoutingHelper g;
 		Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("routing.routes", std::ios::out);
 		g.PrintRoutingTableAllAt (Seconds (2), routingStream);
@@ -192,17 +182,17 @@ int main (int argc, char *argv[])
 		*/
 		port = 9;
 
-		// on off helper is for CBR traffic, we tell INET socket address here that receiver is receiver 1
+		//The on-off helper is for CBR traffic, we tell INET socket address here that receiver is receiver 1
 		OnOffHelper onoff ("ns3::UdpSocketFactory", Address (InetSocketAddress (i3i4.GetAddress (1), port)));
 		// onoff.SetConstantRate (DataRate ("10000kb/s"),udpPacketSize);
 	    onoff.SetAttribute ("PacketSize", UintegerValue (udpPacketSize));
 
 
-		//install the on off app on sender 1 and run for 1-5 seconds
+		//Installing the on off app on sender 1 and run for 1-5 seconds
 		ApplicationContainer udp_apps_s = onoff.Install (n0n2.Get (0));
 
-		//runtime =  (total time of simulation in multiple of 10 for given packet size)
-		//i = for loop counter(packet size is increasing after every loop iteration)
+		//The runtime is equal to the total time of simulation in multiple of 10 for given packet size)
+		//The variable i is used for loop counter(packet size is increasing after every loop iteration)
 		if(simultaneously==false)
 		{
 			udp_apps_s.Start (Seconds ( (0.0+(10*i))*run_time  ) );
@@ -214,10 +204,10 @@ int main (int argc, char *argv[])
 			udp_apps_s.Stop (Seconds ((10.0+(10*i))*run_time) );
 		}
 
-		// Create a packet sink to receive these packets from any ip address.
+		// Creating a packet sink to receive these packets from any ip address.
 		PacketSinkHelper sink_udp ("ns3::UdpSocketFactory",Address (InetSocketAddress (Ipv4Address::GetAny (), port)));
 
-		// install the reciver at reciever 1
+		//Installing the reciver at reciever 1
 		ApplicationContainer udp_apps_d = sink_udp.Install (n3n4.Get (1));
 
 		if(simultaneously==false)
@@ -238,10 +228,10 @@ int main (int argc, char *argv[])
 			**************************
 		*/
 
-		// Create a BulkSendApplication and install it on 2nd reciever
+		// Creating a BulkSendApplication and install it on 2nd reciever
 	    port = 12344;
 	    BulkSendHelper source ("ns3::TcpSocketFactory",InetSocketAddress (i3i5.GetAddress (1), port));
-	    // Set the amount of data to send in bytes.  Zero is unlimited.
+	    // Setting the amount of data to send in bytes. The value zero means unlimited amount.
 	    source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
 		source.SetAttribute ("SendSize", UintegerValue (tcpPacketSize));
 	    ApplicationContainer tcp_apps_s = source.Install (n1n2.Get (0));
@@ -258,7 +248,7 @@ int main (int argc, char *argv[])
 		}
 
 
-	    // Create a PacketSinkApplication and install it on node 1
+	    //Creating a PacketSinkApplication and install it on node 1
 	    PacketSinkHelper sink_tcp ("ns3::TcpSocketFactory",InetSocketAddress (Ipv4Address::GetAny (), port));
 	    ApplicationContainer tcp_apps_d = sink_tcp.Install (n3n5.Get (1));
 
@@ -381,26 +371,26 @@ int main (int argc, char *argv[])
 	std::string plotFileName_delay            = fileNameWithNoExtension_delay + ".plt";
 	std::string plotTitle_delay               = prot + "vs UDP delay";
 
-	// Instantiate the plot and set its title.
+	// Instantiating the plot and setting its title.
 	Gnuplot plot (graphicsFileName);
 	Gnuplot plot_delay (graphicsFileName_delay);
 
 	plot.SetTitle (plotTitle);
 	plot_delay.SetTitle (plotTitle_delay);
 
-	// Make the graphics file, which the plot file will create when it
+	// Making the graphics file, which the plot file will create when it
 	// is used with Gnuplot, be a PNG file.
 	plot.SetTerminal ("png");
 	plot_delay.SetTerminal ("png");
 
-	// Set the labels for each axis.
+	// Setting the labels for each axis.
 	plot.SetLegend ("Packet Size(in Bytes)", "Throughput Values(in mbps)");
 	plot_delay.SetLegend ("Packet Size(in Bytes)", "Delay(in s)");
 
-	// Set the range for the x axis.
+	// Setting the range for the x axis.
 	// plot.AppendExtra ("set xrange [-6:+6]");
 
-	// Instantiate the dataset, set its title, and make the points be
+	// Instantiating the dataset, setting its title, and making the points be
 	// plotted along with connecting lines.
 	dataset_tcp.SetTitle ("Throughput FTP over TCP");
 	dataset_tcp.SetStyle (Gnuplot2dDataset::LINES_POINTS);
@@ -416,20 +406,20 @@ int main (int argc, char *argv[])
 	// double y;
 
 
-	// Add the dataset to the plot.
+	// Adding the dataset to the plot.
 	plot.AddDataset (dataset_tcp);
 	plot.AddDataset (dataset_udp);
 
 	plot_delay.AddDataset (dataset_udp_delay);
 	plot_delay.AddDataset (dataset_tcp_delay);
 
-	// Open the plot file.
+	// Opening the plot file.
 	std::ofstream plotFile (plotFileName.c_str());
 
-	// Write the plot file.
+	// Writing the plot file.
 	plot.GenerateOutput (plotFile);
 
-	// Close the plot file.
+	// Closing the plot file.
 	plotFile.close ();
 
 	std::ofstream plotFile_delay (plotFileName_delay.c_str());
